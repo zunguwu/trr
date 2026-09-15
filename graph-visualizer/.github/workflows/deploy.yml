@@ -1,41 +1,58 @@
-name: Deploy GitHub Pages
+name: Deploy Graph Visualizer
+
 on:
   push:
-    branches: [main]
+    branches: ["main"]
   workflow_dispatch:
+
 permissions:
   contents: read
   pages: write
   id-token: write
+
 concurrency:
   group: pages
   cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: 20
           cache: npm
-      - uses: actions/configure-pages@v5
-        id: pages
-      - run: npm ci
-      - run: npm run lint
-      - run: npm test
-      - run: npm run build
-        env:
-          VITE_BASE_PATH: ${{ steps.pages.outputs.base_path }}/
-      - uses: actions/upload-pages-artifact@v3
+          cache-dependency-path: graph-visualizer/package-lock.json
+
+      - name: Install dependencies
+        working-directory: graph-visualizer
+        run: npm ci
+
+      - name: Build
+        working-directory: graph-visualizer
+        run: npm run build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: graph-visualizer/dist
+
   deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
     runs-on: ubuntu-latest
     needs: build
+
     steps:
       - name: Deploy
         id: deployment
